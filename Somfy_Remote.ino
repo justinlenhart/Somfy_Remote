@@ -41,8 +41,8 @@ void SendCommand(byte *frame, byte sync);
 
 void setup() {
   Serial.begin(115200);
-  DDRD |= 1<<PORT_TX; // Pin 5 an output
-  PORTD &= !(1<<PORT_TX); // Pin 5 LOW
+  DDRD |= 1<<PORT_TX; // Pin 5 an output - Alternative: pinMode(PORT_TX, OUTPUT);
+  PORTD &= !(1<<PORT_TX); // Pin 5 LOW - Alternative: digitalWrite(PORT_TX, LOW);
 
   if (EEPROM.get(EEPROM_ADDRESS, rollingCode) < newRollingCode) {
     EEPROM.put(EEPROM_ADDRESS, newRollingCode);
@@ -148,43 +148,43 @@ void BuildFrame(byte *frame, byte button) {
 void SendCommand(byte *frame, byte sync) {
   if(sync == 2) { // Only with the first frame.
   //Wake-up pulse & Silence
-    PORTD |= 1<<PORT_TX;
+    PORTD |= 1<<PORT_TX; //Alternative: digitalWrite(PORT_TX, HIGH);
     delayMicroseconds(9415);
-    PORTD &= !(1<<PORT_TX);
+    PORTD &= !(1<<PORT_TX); //Alternative: digitalWrite(PORT_TX, LOW);
     delayMicroseconds(89565);
   }
 
 // Hardware sync: two sync for the first frame, seven for the following ones.
   for (int i = 0; i < sync; i++) {
-    PORTD |= 1<<PORT_TX;
+    PORTD |= 1<<PORT_TX; //Alternative: digitalWrite(PORT_TX, HIGH);
     delayMicroseconds(4*SYMBOL);
-    PORTD &= !(1<<PORT_TX);
+    PORTD &= !(1<<PORT_TX); //Alternative: digitalWrite(PORT_TX, LOW);
     delayMicroseconds(4*SYMBOL);
   }
 
 // Software sync
-  PORTD |= 1<<PORT_TX;
+  PORTD |= 1<<PORT_TX; //Alternative: digitalWrite(PORT_TX, HIGH);
   delayMicroseconds(4550);
-  PORTD &= !(1<<PORT_TX);
+  PORTD &= !(1<<PORT_TX); //Alternative: digitalWrite(PORT_TX, LOW);
   delayMicroseconds(SYMBOL);
   
   
 //Data: bits are sent one by one, starting with the MSB.
   for(byte i = 0; i < 56; i++) {
     if(((frame[i/8] >> (7 - (i%8))) & 1) == 1) {
-      PORTD &= !(1<<PORT_TX);
+      PORTD &= !(1<<PORT_TX); //Alternative: digitalWrite(PORT_TX, LOW);
       delayMicroseconds(SYMBOL);
-      PORTD ^= 1<<5;
+      PORTD ^= 1<<PORT_TX; //Alternative: digitalWrite(PORT_TX, HIGH);
       delayMicroseconds(SYMBOL);
     }
     else {
-      PORTD |= (1<<PORT_TX);
+      PORTD |= (1<<PORT_TX); //Alternative: digitalWrite(PORT_TX, LOW);
       delayMicroseconds(SYMBOL);
-      PORTD ^= 1<<5;
+      PORTD ^= 1<<PORT_TX; //Alternative: digitalWrite(PORT_TX, HIGH);
       delayMicroseconds(SYMBOL);
     }
   }
   
-  PORTD &= !(1<<PORT_TX);
+  PORTD &= !(1<<PORT_TX);  //Alternative: digitalWrite(PORT_TX, LOW);
   delayMicroseconds(30415); // Inter-frame silence
 }
